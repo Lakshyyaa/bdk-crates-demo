@@ -9,16 +9,13 @@ fn main() -> anyhow::Result<()> {
         .expect("failed to load wallet");
 
     let mut wallet = new_wallet.expect("Wallet should be initialized");
-    
-    const ELECTRUM_URL: &str = "ssl://electrum.blockstream.info:60002";
-    let new_client =
-        BdkElectrumClient::new(bdk_electrum::electrum_client::Client::new(ELECTRUM_URL).unwrap());
-    let request = wallet.start_full_scan();
-    eprintln!("Starting wallet synchronization...");
-    let update = new_client.full_scan(request, 5, 90, false)?;
-    eprintln!("Sync completed. Applying updates...");
-    wallet.apply_update(update)?;
+    {
+        let mut txs = wallet.transactions();
+        let first_tx = txs.next().unwrap();
+        let send_and_received = wallet.sent_and_received(&first_tx.tx_node);
+        println!("send_and_received: {:?}", send_and_received);
+    }
+    println!("balance is {}", wallet.balance());
     wallet.persist(&mut db)?;
     Ok(())
-
 }
